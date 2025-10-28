@@ -18,21 +18,16 @@ repositories {
 	mavenCentral()
 }
 
-// dependencies {
-// 	implementation("org.springframework.boot:spring-boot-starter")
-// 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-// 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-// }
-
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	runtimeOnly("com.h2database:h2")//간편 데이터 베이스로 사용
 }
-
 
 tasks.withType<Test> {
 	useJUnitPlatform()
