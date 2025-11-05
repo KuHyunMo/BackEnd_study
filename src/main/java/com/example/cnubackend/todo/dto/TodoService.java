@@ -18,7 +18,7 @@ public class TodoService {
                         .completed(dto.getCompleted())
                         .build();
                 Todo savedTodo = todoRepository.save(todo);
-                
+
                 return TodoDto.builder()
                         .id(savedTodo.getId())
                         .title(savedTodo.getTitle())
@@ -34,5 +34,38 @@ public class TodoService {
                                 .completed(todo.getCompleted())
                                 .build())
                         .toList();
+        }
+
+/////////////////////////////////////////////////////
+
+        public TodoDto getById(long id) {
+                Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
+                
+                return TodoDto.builder()
+                        .id(todo.getId())
+                        .title(todo.getTitle())
+                        .completed(todo.getCompleted())
+                        .build();
+        }
+
+        public void deleteById(Long id) {
+                todoRepository.deleteById(id);
+        }
+
+        public TodoDto updateById(Long id, TodoDto dto) {
+                Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
+                todo = Todo.builder()
+                        .id(todo.getId())
+                        .title(dto.getTitle())
+                        .completed(dto.getCompleted())
+                        .build();
+
+                Todo updatedTodo = todoRepository.save(todo);
+
+                return TodoDto.builder()
+                        .id(updatedTodo.getId())
+                        .title(updatedTodo.getTitle())
+                        .completed(updatedTodo.getCompleted())
+                        .build();
         }
 }
