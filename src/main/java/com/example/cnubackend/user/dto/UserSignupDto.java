@@ -10,5 +10,5 @@ import lombok.Setter;
 public class UserSignupDto {
     private String username;
     private String email;
-    private String pasward;
+    private String password;
 }   

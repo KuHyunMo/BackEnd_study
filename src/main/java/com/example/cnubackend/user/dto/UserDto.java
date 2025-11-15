@@ -11,5 +11,5 @@ public class UserDto {
     protected Long id;
     protected String username;
     protected String email;
-    protected String pasward;
+    protected String password;
 }

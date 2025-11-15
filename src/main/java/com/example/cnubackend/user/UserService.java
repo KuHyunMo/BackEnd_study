@@ -12,11 +12,11 @@ public class UserService {
     private final UserRepository userRepository;
 
 
-    public UserDto create(UserSignupDto dto) {
+    public UserDto create(UserSignupDto userDto) {
         User user = User.builder()
-                .username(dto.getUsername())
-                .email(dto.getEmail())
-                .pasward(dto.getPasward())
+                .username(userDto.getUsername())
+                .email(userDto.getEmail())
+                .passward(userDto.getPassword())
                 .build();
         User savedUser = userRepository.save(user);
 
