@@ -19,4 +19,5 @@ public class Todo {
 
     @ManyToOne
     private User createdBy;
+
 }

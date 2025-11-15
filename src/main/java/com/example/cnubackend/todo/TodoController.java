@@ -16,6 +16,14 @@ public class TodoController {
 
     private final TodoService todoService;
 
+
+    //post mapping
+    @PostMapping("")
+    public ResponseEntity<TodoDto> create(@RequestBody TodoDto dto) {
+        TodoDto createdTodo = todoService.create(dto);
+        return ResponseEntity.ok(createdTodo);
+    }
+
     //get mapping
 
     @GetMapping("")
@@ -23,12 +31,6 @@ public class TodoController {
         List<TodoDto> todos = todoService.getAll();
 
         return ResponseEntity.ok(todos);
-    }
-
-    @PostMapping("")
-    public ResponseEntity<TodoDto> create(@RequestBody TodoDto dto) {
-        TodoDto createdTodo = todoService.create(dto);
-        return ResponseEntity.ok(createdTodo);
     }
 
     @GetMapping("/search")
@@ -43,8 +45,6 @@ public class TodoController {
         return ResponseEntity.ok(completedTodos);
     }
     
-    
-
     @GetMapping("/{id}")
     public ResponseEntity<TodoDto> getById(@PathVariable Long id) {
         TodoDto todo = todoService.getById(id);

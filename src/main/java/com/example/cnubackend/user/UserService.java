@@ -5,6 +5,8 @@ import com.example.cnubackend.user.dto.UserDto;
 import com.example.cnubackend.user.dto.UserSignupDto;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -16,7 +18,7 @@ public class UserService {
         User user = User.builder()
                 .username(userDto.getUsername())
                 .email(userDto.getEmail())
-                .passward(userDto.getPassword())
+                .password(userDto.getPassword())
                 .build();
         User savedUser = userRepository.save(user);
 
@@ -26,5 +28,17 @@ public class UserService {
                 .email(savedUser.getEmail())
                 .build();
     }
+
+
+    public List<UserDto> getAll() {
+                return userRepository.findAll().stream()
+                        .map(user -> UserDto.builder()
+                                .id(user.getId())
+                                .username(user.getUsername())
+                                .email(user.getEmail())
+                                .password(user.getPassword())
+                                .build())
+                        .toList();
+        }
 
 }

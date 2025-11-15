@@ -5,10 +5,8 @@ import com.example.cnubackend.user.dto.UserDto;
 import com.example.cnubackend.user.dto.UserSignupDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +17,13 @@ public class UserController {
     @GetMapping("")
     public ResponseEntity<String> hello() {
         return ResponseEntity.ok("Hello User!");
+    }
+
+    @GetMapping("all")
+    public ResponseEntity<List<UserDto>> getALl() {
+        List<UserDto> todos = userService.getAll();
+
+        return ResponseEntity.ok(todos);
     }
 
     @PostMapping("")
