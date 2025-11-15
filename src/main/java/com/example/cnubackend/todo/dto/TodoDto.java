@@ -11,4 +11,5 @@ public class TodoDto {
     Long id;
     String title;
     Boolean completed;
+    long createdBy;
 }
