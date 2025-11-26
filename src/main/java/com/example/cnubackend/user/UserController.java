@@ -1,35 +1,32 @@
 package com.example.cnubackend.user;
 
 import lombok.RequiredArgsConstructor;
-import com.example.cnubackend.user.dto.UserDto;
-import com.example.cnubackend.user.dto.UserSignupDto;
+
+//import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+//import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+//import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
-    private final UserService userService;
+    //private final UserService userService;
 
+    //서버 작동 획인용 디버깅 코드
     @GetMapping("")
     public ResponseEntity<String> hello() {
         return ResponseEntity.ok("Hello User!");
     }
 
-    @GetMapping("all")
-    public ResponseEntity<List<UserDto>> getALl() {
-        List<UserDto> todos = userService.getAll();
-
-        return ResponseEntity.ok(todos);
-    }
-
-    @PostMapping("")
-    public ResponseEntity<UserDto> create(@RequestBody UserSignupDto userDto) {
-        UserDto createdUser = userService.create(userDto);
-        return ResponseEntity.ok(createdUser);
+    //로그인한 사용자의 아이디를 반환<인증 테스트용>
+    @PostMapping("/authenticated") //Spring Security가 인증된 사용자 정보를 SecurityContext에서 꺼내서 userDetails에 자동로 주입
+    public ResponseEntity<String> authenticatedWithUserDetails(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok("Hello " + (userDetails != null ? userDetails.getUsername() : "anonymous"));
     }
 
 }
