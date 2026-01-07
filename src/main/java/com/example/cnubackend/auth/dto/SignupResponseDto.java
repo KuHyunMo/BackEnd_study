@@ -9,5 +9,5 @@ import lombok.*;
 @Getter
 public class SignupResponseDto {
     private Long id;
-    private String name;
+    private String nickname;
 }

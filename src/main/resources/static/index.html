@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>Todo List API UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #0001;
+            padding: 32px 24px 24px 24px;
+        }
+        h2, h3 {
+            margin-top: 0;
+        }
+        .todo-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .todo-card {
+            background: #f4f6fb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 1px 4px #0001;
+        }
+        .todo-title {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .todo-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            border: none;
+            border-radius: 5px;
+            padding: 6px 14px;
+            font-size: 1em;
+            cursor: pointer;
+            background: #1976d2;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #125ea7; }
+        .btn-danger { background: #e53935; }
+        .btn-danger:hover { background: #b71c1c; }
+        .btn-secondary { background: #90a4ae; }
+        .btn-secondary:hover { background: #607d8b; }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        input, select {
+            padding: 7px 10px;
+            border: 1px solid #cfd8dc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        #out {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 6px;
+            min-height: 32px;
+            margin-top: 10px;
+            font-size: 0.97em;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px 4px; }
+            .input-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📝 Todo List</h2>
+    <div class="input-row">
+        <input id="search-keyword" placeholder="제목 검색" />
+        <select id="filter-completed">
+            <option value="">전체</option>
+            <option value="true">완료</option>
+            <option value="false">미완료</option>
+        </select>
+        <button class="btn" id="btn-search">검색</button>
+        <button class="btn btn-secondary" id="btn-refresh">전체목록</button>
+    </div>
+    <div class="input-row">
+        <input id="title" placeholder="할 일 제목" />
+        <select id="completed">
+            <option value="false">미완료</option>
+            <option value="true">완료</option>
+        </select>
+        <button class="btn" id="btn-create">추가</button>
+    </div>
+    <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-secondary" id="btn-logout">로그아웃</button>
+        <span id="token-status" style="font-size:0.95em;color:#888;"></span>
+    </div>
+    <h3>Todo 목록</h3>
+    <ul class="todo-list" id="todo-list"></ul>
+    <h3>응답/메시지</h3>
+    <pre id="out"></pre>
+</div>
+<script>
+    const TODOS_PATH = 'http://localhost:8080/api/todos';
+    const out = document.getElementById('out');
+    const todoList = document.getElementById('todo-list');
+    const tokenStatus = document.getElementById('token-status');
+
+    function tokenHeader() {
+        const token = localStorage.getItem('authToken');
+        return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
+    function showTokenStatus() {
+        const token = localStorage.getItem('authToken');
+        tokenStatus.textContent = token ? '토큰 있음' : '로그인 필요';
+        tokenStatus.style.color = token ? '#1976d2' : '#e53935';
+        // 로그인 안 되어 있으면 로그인 페이지로 이동
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+    }
+    showTokenStatus();
+
+    function showMessage(msg, isError) {
+        out.textContent = msg;
+        out.style.color = isError ? '#e53935' : '#222';
+    }
+
+    function renderTodos(todos) {
+        todoList.innerHTML = '';
+        if (!todos || todos.length === 0) {
+            todoList.innerHTML = '<li style="color:#888;text-align:center;">할 일이 없습니다.</li>';
+            return;
+        }
+        todos.forEach(todo => {
+            const li = document.createElement('li');
+            li.className = 'todo-card';
+            li.innerHTML = `
+                <div class="todo-title" style="display:flex;align-items:center;gap:8px;">
+                    <span>${todo.title}</span>
+                </div>
+                <div style="font-size:0.97em;color:#666;">상태: <b style="color:${todo.completed ? '#1976d2' : '#e53935'}">${todo.completed ? '완료' : '미완료'}</b></div>
+                <div style="font-size:0.93em;color:#aaa;">ID: ${todo.id ?? '-'} | 작성자: ${todo.createdBy ?? '-'}</div>
+                <div class="todo-actions">
+                    <button class="btn btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
+                </div>
+            `;
+            todoList.appendChild(li);
+        });
+    }
+
+    async function fetchTodos() {
+        showMessage('로딩...');
+        try {
+            const res = await fetch(TODOS_PATH, { headers: { 'Accept': 'application/json', ...tokenHeader() } });
+            // const data = await res.json();
+            // renderTodos(data);
+            // showMessage('목록 불러오기 성공');
+
+            const text = await res.text(); 
+        if (!text) {
+            renderTodos([]); // 본문이 없으면 빈 배열로 처리
+            showMessage('목록이 없습니다.');
+            return;
+        }
+
+        const data = JSON.parse(text); // 텍스트를 JSON으로 변환
+        renderTodos(data);
+        showMessage('목록 불러오기 성공');
+
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    async function createTodo() {
+        const title = document.getElementById('title').value.trim();
+        const completed = document.getElementById('completed').value === 'true';
+        if (!title) return showMessage('제목을 입력하세요.', true);
+        showMessage('추가 중...');
+        try {
+            const res = await fetch(TODOS_PATH, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...tokenHeader() },
+                body: JSON.stringify({ title, completed })
+            });
+
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+
+            //const data = await res.json();
+            if (res.ok) {
+                showMessage('추가 성공!');
+                document.getElementById('title').value = '';
+                document.getElementById('completed').value = 'false';
+                fetchTodos();
+            } else {
+                showMessage('에러: ' + (data.message || JSON.stringify(data)), true);
+            }
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    async function deleteTodo(id) {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        showMessage('삭제 중...');
+        try {
+            const res = await fetch(`${TODOS_PATH}/${id}`, {
+                method: 'DELETE',
+                headers: tokenHeader()
+            });
+            if (res.status === 204) {
+                showMessage('삭제 성공!');
+                fetchTodos();
+            } else {
+                const data = await res.json();
+                showMessage('에러: ' + (data.message || JSON.stringify(data)), true);
+            }
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    async function searchTodos() {
+        const keyword = document.getElementById('search-keyword').value.trim();
+        if (!keyword) return fetchTodos();
+        showMessage('검색 중...');
+        try {
+            const res = await fetch(`${TODOS_PATH}/search?keyword=` + encodeURIComponent(keyword), {
+                headers: { 'Accept': 'application/json', ...tokenHeader() }
+            });
+            const data = await res.json();
+            renderTodos(data);
+            showMessage('검색 완료');
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    async function filterCompleted() {
+        const val = document.getElementById('filter-completed').value;
+        if (val === '') return fetchTodos();
+        showMessage('필터링 중...');
+        try {
+            const res = await fetch(`${TODOS_PATH}/completed?completed=${val}`, {
+                headers: { 'Accept': 'application/json', ...tokenHeader() }
+            });
+            const data = await res.json();
+            renderTodos(data);
+            showMessage('필터링 완료');
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        localStorage.removeItem('authToken');
+        showTokenStatus();
+        showMessage('로그아웃 되었습니다.');
+        todoList.innerHTML = '';
+    });
+    document.getElementById('btn-create').addEventListener('click', createTodo);
+    document.getElementById('btn-refresh').addEventListener('click', fetchTodos);
+    document.getElementById('btn-search').addEventListener('click', searchTodos);
+    document.getElementById('filter-completed').addEventListener('change', filterCompleted);
+    fetchTodos();
+</script>
+</body>
+</html>

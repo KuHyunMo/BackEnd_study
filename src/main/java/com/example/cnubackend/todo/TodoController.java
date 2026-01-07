@@ -2,40 +2,44 @@ package com.example.cnubackend.todo;
 
 
 import com.example.cnubackend.todo.dto.TodoDto;
+import com.example.cnubackend.todo.dto.TodoResponseDto;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/todos")
+@RequestMapping("/api/todos")
 public class TodoController {
 
     private final TodoService todoService;
 
-
     //post mapping
     @PostMapping("")
-    public ResponseEntity<TodoDto> create(@RequestBody TodoDto dto) {
-        TodoDto createdTodo = todoService.create(dto);
+    public ResponseEntity<TodoDto> create(@RequestBody TodoDto dto, @AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.valueOf(user.getUsername());
+        TodoDto createdTodo = todoService.create(userId, dto);
         return ResponseEntity.ok(createdTodo);
     }
 
     //get mapping
-
     @GetMapping("")
-    public ResponseEntity<List<TodoDto>> getALl() {
-        List<TodoDto> todos = todoService.getAll();
+    public ResponseEntity<List<TodoResponseDto>> getALl() {
+        List<TodoResponseDto> todos = todoService.getAll();
 
         return ResponseEntity.ok(todos);
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<TodoDto>> search(@RequestParam String keyword) {
-        List<TodoDto> results = todoService.searchBytitle(keyword);
+        List<TodoDto> results = todoService.searchByTitle(keyword);
         return ResponseEntity.ok(results);
     }
 
@@ -44,6 +48,14 @@ public class TodoController {
         List<TodoDto> completedTodos = todoService.getCompletedTodos(completed);
         return ResponseEntity.ok(completedTodos);
     }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<TodoDto>> getMyTodos(@AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.valueOf(user.getUsername());
+        List<TodoDto> myTodos = todoService.getByCreatedById(userId);
+        return ResponseEntity.ok(myTodos);
+    }
+
     
     @GetMapping("/{id}")
     public ResponseEntity<TodoDto> getById(@PathVariable Long id) {
@@ -58,7 +70,6 @@ public class TodoController {
     }
     
     //delete mapping
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         todoService.deleteById(id);

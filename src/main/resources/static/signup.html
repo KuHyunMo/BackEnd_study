@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>회원가입 - Todo List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #0001;
+            padding: 32px 24px 24px 24px;
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        input {
+            padding: 10px 12px;
+            border: 1px solid #cfd8dc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .btn {
+            border: none;
+            border-radius: 5px;
+            padding: 10px 0;
+            font-size: 1.1em;
+            cursor: pointer;
+            background: #1976d2;
+            color: #fff;
+            transition: background 0.2s;
+            margin-bottom: 6px;
+        }
+        .btn:hover { background: #125ea7; }
+        .btn-secondary {
+            background: #90a4ae;
+        }
+        .btn-secondary:hover {
+            background: #607d8b;
+        }
+        #out {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 6px;
+            min-height: 32px;
+            margin-top: 16px;
+            font-size: 0.97em;
+            word-break: break-all;
+        }
+        @media (max-width: 500px) {
+            .container { padding: 12px 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📝 회원가입</h2>
+    <div class="input-row">
+        <input id="username" placeholder="아이디" autocomplete="username" />
+        <input id="password" type="password" placeholder="비밀번호" autocomplete="new-password" />
+        <input id="nickname" placeholder="닉네임 (선택)" />
+        <button class="btn" id="btn-signup">회원가입</button>
+        <button class="btn btn-secondary" id="btn-move-login">로그인으로 이동</button>
+    </div>
+    <div id="out"></div>
+</div>
+<script>
+    const SIGNUP_PATH = 'http://localhost:8080/api/auth/signup';
+    const out = document.getElementById('out');
+
+    function showMessage(msg, isError) {
+        out.textContent = msg;
+        out.style.color = isError ? '#e53935' : '#222';
+    }
+
+    async function signup() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const nickname = document.getElementById('nickname').value.trim();
+        if (!username || !password) return showMessage('아이디와 비밀번호를 입력하세요.', true);
+        showMessage('회원가입 요청 중...');
+        try {
+            const res = await fetch(SIGNUP_PATH, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, nickname })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showMessage('회원가입 성공! 잠시 후 로그인 페이지로 이동합니다.');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+            } else {
+                showMessage('회원가입 실패: ' + (data.message || JSON.stringify(data)), true);
+            }
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    document.getElementById('btn-signup').addEventListener('click', signup);
+    document.getElementById('btn-move-login').addEventListener('click', function() {
+        window.location.href = 'login.html';
+    });
+    // 엔터키로 회원가입
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') signup();
+    });
+</script>
+</body>
+</html>
+

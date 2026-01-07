@@ -8,14 +8,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 //import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 //import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
-    //private final UserService userService;
+    private final UserService userService;
 
     //서버 작동 획인용 디버깅 코드
     @GetMapping("")

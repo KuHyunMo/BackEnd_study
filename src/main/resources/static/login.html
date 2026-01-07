@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>로그인 - Todo List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #0001;
+            padding: 32px 24px 24px 24px;
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        input {
+            padding: 10px 12px;
+            border: 1px solid #cfd8dc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .btn {
+            border: none;
+            border-radius: 5px;
+            padding: 10px 0;
+            font-size: 1.1em;
+            cursor: pointer;
+            background: #1976d2;
+            color: #fff;
+            transition: background 0.2s;
+            margin-bottom: 6px;
+        }
+        .btn:hover { background: #125ea7; }
+        .btn-secondary {
+            background: #90a4ae;
+        }
+        .btn-secondary:hover {
+            background: #607d8b;
+        }
+        #out {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 6px;
+            min-height: 32px;
+            margin-top: 16px;
+            font-size: 0.97em;
+            word-break: break-all;
+        }
+        .token-box {
+            font-size: 0.97em;
+            color: #1976d2;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        @media (max-width: 500px) {
+            .container { padding: 12px 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🔐 로그인</h2>
+    <div class="input-row">
+        <input id="username" placeholder="아이디" autocomplete="username" />
+        <input id="password" type="password" placeholder="비밀번호" autocomplete="current-password" />
+        <button class="btn" id="btn-login">로그인</button>
+        <button class="btn btn-secondary" id="btn-logout">로그아웃</button>
+        <button class="btn btn-secondary" id="btn-move-signup">회원가입</button>
+    </div>
+    <div id="out"></div>
+    <div class="token-box" id="token-box"></div>
+</div>
+<script>
+    const LOGIN_PATH = 'http://localhost:8080/api/auth/login';
+    const out = document.getElementById('out');
+    const tokenBox = document.getElementById('token-box');
+
+    function showMessage(msg, isError) {
+        out.textContent = msg;
+        out.style.color = isError ? '#e53935' : '#222';
+    }
+    function showToken() {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            tokenBox.textContent = '현재 토큰: ' + token;
+        } else {
+            tokenBox.textContent = '';
+        }
+    }
+    showToken();
+
+    async function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        if (!username || !password) return showMessage('아이디와 비밀번호를 입력하세요.', true);
+        showMessage('로그인 요청 중...');
+        try {
+            const res = await fetch(LOGIN_PATH, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok && data.token) {
+                localStorage.setItem('authToken', data.token);
+                showMessage('로그인 성공! 잠시 후 메인으로 이동합니다.');
+                showToken();
+                setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+            } else {
+                showMessage('로그인 실패: ' + (data.message || JSON.stringify(data)), true);
+            }
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('authToken');
+        showMessage('토큰 삭제됨');
+        showToken();
+    }
+
+    document.getElementById('btn-login').addEventListener('click', login);
+    document.getElementById('btn-logout').addEventListener('click', logout);
+    document.getElementById('btn-move-signup').addEventListener('click', function() {
+        window.location.href = 'signup.html';
+    });
+
+    // 엔터키로 로그인
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') login();
+    });
+</script>
+</body>
+</html>

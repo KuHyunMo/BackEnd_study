@@ -3,12 +3,12 @@ package com.example.cnubackend.todo;
 
 import lombok.RequiredArgsConstructor;
 import com.example.cnubackend.todo.dto.TodoDto;
+import com.example.cnubackend.todo.dto.TodoResponseDto;
 import com.example.cnubackend.exception.NotFoundException;
+import com.example.cnubackend.user.dto.UserDto;
 import com.example.cnubackend.user.User;
 import com.example.cnubackend.user.UserRepository;
 import org.springframework.stereotype.Service;
-
-
 
 import java.util.List;
 
@@ -19,8 +19,8 @@ public class TodoService {
         private final TodoRepository todoRepository;
         private final UserRepository userRepository;
 
-        public TodoDto create(TodoDto dto) {
-                User user = userRepository.findById(dto.getCreatedBy()).orElseThrow(() -> new NotFoundException("User not found"));
+        public TodoDto create(Long userId, TodoDto dto) {
+                User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
                 Todo todo = Todo.builder()
                         .title(dto.getTitle())
                         .completed(dto.getCompleted())
@@ -35,83 +35,111 @@ public class TodoService {
                         .build();
         }
 
-        public List<TodoDto> getAll() {
+        // public List<TodoResponseDto> getAll() {
+        //         return todoRepository.findAll().stream()
+        //                 .map(todo -> TodoResponseDto.builder()
+        //                         .id(todo.getId())
+        //                         .title(todo.getTitle())
+        //                         .completed(todo.getCompleted())
+        //                         .createdBy(
+        //                                 UserDto.builder()
+        //                                         .id(todo.getCreatedBy().getId())
+        //                                         .name(todo.getCreatedBy().getName())
+        //                                         .username(todo.getCreatedBy().getUsername())
+        //                                         .build()
+        //                         )
+        //                         .build())
+        //                 .toList();
+        // }
+
+        ////////////
+        public List<TodoResponseDto> getAll() {
                 return todoRepository.findAll().stream()
-                        .map(todo -> TodoDto.builder()
+                        .map(todo -> {
+                        // 1. 작성자(User) 정보가 있는지 먼저 확인합니다.
+                        UserDto userDto = null;
+                        if (todo.getCreatedBy() != null) {
+                                userDto = UserDto.builder()
+                                        .id(todo.getCreatedBy().getId())
+                                        .nickname(todo.getCreatedBy().getNickname())
+                                        .username(todo.getCreatedBy().getUsername())
+                                        .build();
+                        }
+
+                    // 2. 작성자가 없으면 null인 채로, 있으면 정보를 담아서 반환합니다.
+                        return TodoResponseDto.builder()
                                 .id(todo.getId())
                                 .title(todo.getTitle())
                                 .completed(todo.getCompleted())
-                                .build())
+                                .createdBy(userDto) // 안전하게 넣기
+                                .build();
+                        })
                         .toList();
         }
 
-/////////////////////////////////////////////////////
+        ///////////////////////
 
-        public TodoDto getById(long id) {
-                Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
-                
-                return TodoDto.builder()
+
+        public TodoDto getById(Long id) {
+        Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
+        return TodoDto.builder()
+                .id(todo.getId())
+                .title(todo.getTitle())
+                .completed(todo.getCompleted())
+                .build();
+    }
+
+    public void deleteById(Long id) {
+        todoRepository.deleteById(id);
+    }
+
+    public TodoDto updateById(Long id, TodoDto dto) {
+        Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
+        todo = Todo.builder()
+                .id(todo.getId())
+                .title(dto.getTitle())
+                .completed(dto.getCompleted())
+                .build();
+
+        Todo updatedTodo = todoRepository.save(todo);
+
+        return TodoDto.builder()
+                .id(updatedTodo.getId())
+                .title(updatedTodo.getTitle())
+                .completed(updatedTodo.getCompleted())
+                .build();
+    }
+
+    public List<TodoDto> searchByTitle(String keyword) {
+        List<Todo> todos = todoRepository.findByTitleContaining(keyword);
+        return todos.stream()
+                .map(todo -> TodoDto.builder()
                         .id(todo.getId())
                         .title(todo.getTitle())
                         .completed(todo.getCompleted())
-                        .build();
-        }
+                        .build()
+                ).toList();
+    }
 
-        public void deleteById(Long id) {
-                todoRepository.deleteById(id);
-        }
-
-        public TodoDto updateById(Long id, TodoDto dto) {
-                Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
-                todo = Todo.builder()
+    public List<TodoDto> getCompletedTodos(Boolean completed) {
+        List<Todo> todos = todoRepository.findByCompleted(completed);
+        return todos.stream()
+                .map(todo -> TodoDto.builder()
                         .id(todo.getId())
-                        .title(dto.getTitle())
-                        .completed(dto.getCompleted())
-                        .build();
+                        .title(todo.getTitle())
+                        .completed(todo.getCompleted())
+                        .build()
+                ).toList();
+    }
 
-                Todo updatedTodo = todoRepository.save(todo);
-
-                return TodoDto.builder()
-                        .id(updatedTodo.getId())
-                        .title(updatedTodo.getTitle())
-                        .completed(updatedTodo.getCompleted())
-                        .build();
-        }
-
-        //////////////////////////////////////////////////
-    
-        public List<TodoDto> searchBytitle(String keyward) {
-                List<Todo> todos = todoRepository.findByTitleContaining(keyward);
-                return todos.stream()
-                        .map(todo -> TodoDto.builder()
-                                .id(todo.getId())
-                                .title(todo.getTitle())
-                                .completed(todo.getCompleted())
-                                .build())
-                        .toList();
-        }
-
-        public List<TodoDto> getCompletedTodos(boolean completed) {
-                List<Todo> completedTodos = todoRepository.findByCompleted(completed);
-                        
-                return completedTodos.stream()    
-                        .map(todo -> TodoDto.builder()
-                                .id(todo.getId())
-                                .title(todo.getTitle())
-                                .completed(todo.getCompleted())
-                                .build())
-                        .toList();
-        }
-        
-        public List<TodoDto> getByCreatedById(Long createdBy) {
-                List<Todo> todos = todoRepository.findByCreatedById(createdBy);
-                return todos.stream()
-                        .map(todo -> TodoDto.builder()
-                                .id(todo.getId())
-                                .title(todo.getTitle())
-                                .completed(todo.getCompleted())
-                                .build())
-                        .toList();
-        }
+    public List<TodoDto> getByCreatedById(Long createdBy) {
+        List<Todo> todos = todoRepository.findByCreatedById(createdBy);
+        return todos.stream()
+                .map(todo -> TodoDto.builder()
+                        .id(todo.getId())
+                        .title(todo.getTitle())
+                        .completed(todo.getCompleted())
+                        .build()
+                ).toList();
+    }
 }
-

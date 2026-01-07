@@ -30,7 +30,8 @@ public class SecurityConfig {
                         .configurationSource(request -> {
                             var corsConfig = new CorsConfiguration();
                             corsConfig.setAllowCredentials(true);
-                            corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); //http://localhost:3000에서 오는 요청 허용
+                            corsConfig.setAllowedOriginPatterns(List.of("*")); // 모든 Origin 허용 (개발용)
+                            //corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); //http://localhost:3000에서 오는 요청 허용
                             corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE","PATCH")); //모든 HTTP 메서드 허용
                             corsConfig.setAllowedHeaders(List.of("*")); //모든 헤더 허용
                             return corsConfig;

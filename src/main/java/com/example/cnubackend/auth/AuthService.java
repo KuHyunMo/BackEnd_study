@@ -20,19 +20,24 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public SignupResponseDto signup(SignupRequestDto signupRequestDto) { //회원가입
+        
+        if(userRepository.existsByUsername(signupRequestDto.getUsername()) ) {
+            throw new RuntimeException("이미 존재하는 아이디입니다.");
+        }
+        
         String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword()); //비밀번호 암호화
         
         User user = User.builder()
+                .nickname(signupRequestDto.getNickname())
                 .username(signupRequestDto.getUsername())
-                .password(encodedPassword)
-                .name(signupRequestDto.getName())
+                .password(encodedPassword) 
                 .build();
 
         User savedUser = userRepository.save(user); //DB에 유저 저장
 
         return SignupResponseDto.builder()
                 .id(savedUser.getId())
-                .name(savedUser.getName())
+                .nickname(savedUser.getNickname())
                 .build();
         }
 
