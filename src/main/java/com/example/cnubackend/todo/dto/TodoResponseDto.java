@@ -12,7 +12,7 @@ public class TodoResponseDto {
     Long id;
     String title;
     Boolean completed;
-    UserDto createdBy;
+    //UserDto createdBy;
     //private String name;
-    //private String username;
+    private String nickname;
 }

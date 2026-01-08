@@ -8,6 +8,8 @@ import com.example.cnubackend.exception.NotFoundException;
 import com.example.cnubackend.user.dto.UserDto;
 import com.example.cnubackend.user.User;
 import com.example.cnubackend.user.UserRepository;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +21,23 @@ public class TodoService {
         private final TodoRepository todoRepository;
         private final UserRepository userRepository;
 
-        public TodoDto create(Long userId, TodoDto dto) {
+        private TodoResponseDto entityToDto(Todo todo) {
+                String nickname = "알수없음";
+
+                // 작성자 정보가 있고, 닉네임이 있다면 가져오기
+                if (todo.getCreatedBy() != null) {
+                        nickname = todo.getCreatedBy().getNickname();
+                }
+
+                return TodoResponseDto.builder()
+                        .id(todo.getId())
+                        .title(todo.getTitle())
+                        .completed(todo.getCompleted())
+                        .nickname(nickname) // 여기가 핵심입니다!
+                        .build();
+        }
+
+        public TodoResponseDto create(Long userId, TodoDto dto) {
                 User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
                 Todo todo = Todo.builder()
                         .title(dto.getTitle())
@@ -28,118 +46,58 @@ public class TodoService {
                         .build();
                 Todo savedTodo = todoRepository.save(todo);
 
-                return TodoDto.builder()
-                        .id(savedTodo.getId())
-                        .title(savedTodo.getTitle())
-                        .completed(savedTodo.getCompleted())
-                        .build();
+                return entityToDto(savedTodo);
         }
 
-        // public List<TodoResponseDto> getAll() {
-        //         return todoRepository.findAll().stream()
-        //                 .map(todo -> TodoResponseDto.builder()
-        //                         .id(todo.getId())
-        //                         .title(todo.getTitle())
-        //                         .completed(todo.getCompleted())
-        //                         .createdBy(
-        //                                 UserDto.builder()
-        //                                         .id(todo.getCreatedBy().getId())
-        //                                         .name(todo.getCreatedBy().getName())
-        //                                         .username(todo.getCreatedBy().getUsername())
-        //                                         .build()
-        //                         )
-        //                         .build())
-        //                 .toList();
-        // }
-
-        ////////////
         public List<TodoResponseDto> getAll() {
-                return todoRepository.findAll().stream()
-                        .map(todo -> {
-                        // 1. 작성자(User) 정보가 있는지 먼저 확인합니다.
-                        UserDto userDto = null;
-                        if (todo.getCreatedBy() != null) {
-                                userDto = UserDto.builder()
-                                        .id(todo.getCreatedBy().getId())
-                                        .nickname(todo.getCreatedBy().getNickname())
-                                        .username(todo.getCreatedBy().getUsername())
-                                        .build();
-                        }
 
-                    // 2. 작성자가 없으면 null인 채로, 있으면 정보를 담아서 반환합니다.
-                        return TodoResponseDto.builder()
-                                .id(todo.getId())
-                                .title(todo.getTitle())
-                                .completed(todo.getCompleted())
-                                .createdBy(userDto) // 안전하게 넣기
-                                .build();
-                        })
+                return todoRepository.findAll().stream()
+                        .map(this::entityToDto)
+                        .toList();
+               
+        }
+
+
+        public TodoResponseDto getById(Long id) {
+                Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
+                return entityToDto(todo);
+        }
+
+        public void deleteById(Long id)
+        { todoRepository.deleteById(id); }
+
+        public TodoResponseDto updateById(Long id, TodoDto dto) {
+                Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
+                todo = Todo.builder()
+                        .id(todo.getId())
+                        .title(dto.getTitle())
+                        .completed(dto.getCompleted())
+                        .createdBy(todo.getCreatedBy())
+                        .build();
+
+                Todo updatedTodo = todoRepository.save(todo);
+
+                return entityToDto(updatedTodo);
+        }
+
+        public List<TodoResponseDto> searchByTitle(String keyword) {
+
+                return todoRepository.findByTitleContaining(keyword).stream()
+                        .map(this::entityToDto)
                         .toList();
         }
 
-        ///////////////////////
+        public List<TodoResponseDto> getCompletedTodos(Boolean completed) {
 
+                return todoRepository.findByCompleted(completed).stream()
+                        .map(this::entityToDto)
+                        .toList();
+        }
 
-        public TodoDto getById(Long id) {
-        Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
-        return TodoDto.builder()
-                .id(todo.getId())
-                .title(todo.getTitle())
-                .completed(todo.getCompleted())
-                .build();
-    }
+        public List<TodoResponseDto> getByCreatedById(Long createdBy) {
 
-    public void deleteById(Long id) {
-        todoRepository.deleteById(id);
-    }
-
-    public TodoDto updateById(Long id, TodoDto dto) {
-        Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
-        todo = Todo.builder()
-                .id(todo.getId())
-                .title(dto.getTitle())
-                .completed(dto.getCompleted())
-                .build();
-
-        Todo updatedTodo = todoRepository.save(todo);
-
-        return TodoDto.builder()
-                .id(updatedTodo.getId())
-                .title(updatedTodo.getTitle())
-                .completed(updatedTodo.getCompleted())
-                .build();
-    }
-
-    public List<TodoDto> searchByTitle(String keyword) {
-        List<Todo> todos = todoRepository.findByTitleContaining(keyword);
-        return todos.stream()
-                .map(todo -> TodoDto.builder()
-                        .id(todo.getId())
-                        .title(todo.getTitle())
-                        .completed(todo.getCompleted())
-                        .build()
-                ).toList();
-    }
-
-    public List<TodoDto> getCompletedTodos(Boolean completed) {
-        List<Todo> todos = todoRepository.findByCompleted(completed);
-        return todos.stream()
-                .map(todo -> TodoDto.builder()
-                        .id(todo.getId())
-                        .title(todo.getTitle())
-                        .completed(todo.getCompleted())
-                        .build()
-                ).toList();
-    }
-
-    public List<TodoDto> getByCreatedById(Long createdBy) {
-        List<Todo> todos = todoRepository.findByCreatedById(createdBy);
-        return todos.stream()
-                .map(todo -> TodoDto.builder()
-                        .id(todo.getId())
-                        .title(todo.getTitle())
-                        .completed(todo.getCompleted())
-                        .build()
-                ).toList();
-    }
+                return todoRepository.findByCreatedById(createdBy).stream()
+                        .map(this::entityToDto)
+                        .toList();
+        }
 }

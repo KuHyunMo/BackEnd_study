@@ -23,9 +23,9 @@ public class TodoController {
 
     //post mapping
     @PostMapping("")
-    public ResponseEntity<TodoDto> create(@RequestBody TodoDto dto, @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<TodoResponseDto> create(@RequestBody TodoDto dto, @AuthenticationPrincipal UserDetails user) {
         Long userId = Long.valueOf(user.getUsername());
-        TodoDto createdTodo = todoService.create(userId, dto);
+        TodoResponseDto createdTodo = todoService.create(userId, dto);
         return ResponseEntity.ok(createdTodo);
     }
 
@@ -38,34 +38,34 @@ public class TodoController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<TodoDto>> search(@RequestParam String keyword) {
-        List<TodoDto> results = todoService.searchByTitle(keyword);
+    public ResponseEntity<List<TodoResponseDto>> search(@RequestParam String keyword) {
+        List<TodoResponseDto> results = todoService.searchByTitle(keyword);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/completed")
-    public ResponseEntity<List<TodoDto>> getCompletedTodos(@RequestParam Boolean completed) {
-        List<TodoDto> completedTodos = todoService.getCompletedTodos(completed);
+    public ResponseEntity<List<TodoResponseDto>> getCompletedTodos(@RequestParam Boolean completed) {
+        List<TodoResponseDto> completedTodos = todoService.getCompletedTodos(completed);
         return ResponseEntity.ok(completedTodos);
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<TodoDto>> getMyTodos(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<List<TodoResponseDto>> getMyTodos(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.valueOf(user.getUsername());
-        List<TodoDto> myTodos = todoService.getByCreatedById(userId);
+        List<TodoResponseDto> myTodos = todoService.getByCreatedById(userId);
         return ResponseEntity.ok(myTodos);
     }
 
     
     @GetMapping("/{id}")
-    public ResponseEntity<TodoDto> getById(@PathVariable Long id) {
-        TodoDto todo = todoService.getById(id);
+    public ResponseEntity<TodoResponseDto> getById(@PathVariable Long id) {
+        TodoResponseDto todo = todoService.getById(id);
         return ResponseEntity.ok(todo);
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TodoDto>> getByUserId(@PathVariable Long userId) {
-        List<TodoDto> UserIdtodos = todoService.getByCreatedById(userId);
+    public ResponseEntity<List<TodoResponseDto>> getByUserId(@PathVariable Long userId) {
+        List<TodoResponseDto> UserIdtodos = todoService.getByCreatedById(userId);
         return ResponseEntity.ok(UserIdtodos);
     }
     
@@ -77,10 +77,9 @@ public class TodoController {
     }
 
     //put mapping
-
     @PutMapping("/{id}")
-    public ResponseEntity<TodoDto> updateById(@PathVariable Long id, @RequestBody TodoDto dto) {
-        TodoDto updatedTodo = todoService.updateById(id, dto);
+    public ResponseEntity<TodoResponseDto> updateById(@PathVariable Long id, @RequestBody TodoDto dto) {
+        TodoResponseDto updatedTodo = todoService.updateById(id, dto);
         return ResponseEntity.ok(updatedTodo);
     }    
     

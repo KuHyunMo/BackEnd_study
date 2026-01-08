@@ -156,7 +156,7 @@
                     <span>${todo.title}</span>
                 </div>
                 <div style="font-size:0.97em;color:#666;">상태: <b style="color:${todo.completed ? '#1976d2' : '#e53935'}">${todo.completed ? '완료' : '미완료'}</b></div>
-                <div style="font-size:0.93em;color:#aaa;">ID: ${todo.id ?? '-'} | 작성자: ${todo.createdBy ?? '-'}</div>
+                <div style="font-size:0.93em;color:#aaa;">ID: ${todo.id ?? '-'} | 작성자: ${todo.nickname ?? '-'}</div>
                 <div class="todo-actions">
                     <button class="btn btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
                 </div>
@@ -169,9 +169,6 @@
         showMessage('로딩...');
         try {
             const res = await fetch(TODOS_PATH, { headers: { 'Accept': 'application/json', ...tokenHeader() } });
-            // const data = await res.json();
-            // renderTodos(data);
-            // showMessage('목록 불러오기 성공');
 
             const text = await res.text(); 
         if (!text) {
@@ -204,7 +201,6 @@
             const text = await res.text();
             const data = text ? JSON.parse(text) : {};
 
-            //const data = await res.json();
             if (res.ok) {
                 showMessage('추가 성공!');
                 document.getElementById('title').value = '';
