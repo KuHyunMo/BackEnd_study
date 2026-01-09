@@ -33,7 +33,7 @@ public class TodoService {
                         .id(todo.getId())
                         .title(todo.getTitle())
                         .completed(todo.getCompleted())
-                        .nickname(nickname) // 여기가 핵심입니다!
+                        .nickname(nickname)
                         .build();
         }
 
@@ -50,13 +50,10 @@ public class TodoService {
         }
 
         public List<TodoResponseDto> getAll() {
-
                 return todoRepository.findAll().stream()
                         .map(this::entityToDto)
                         .toList();
-               
         }
-
 
         public TodoResponseDto getById(Long id) {
                 Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found"));
@@ -80,6 +77,18 @@ public class TodoService {
                 return entityToDto(updatedTodo);
         }
 
+        public List<TodoResponseDto> getByCreatedById(Long createdBy) {
+                return todoRepository.findByCreatedById(createdBy).stream()
+                        .map(this::entityToDto)
+                        .toList();
+        }
+
+        public List<TodoResponseDto> getCompletedTodos(Boolean completed) {
+                return todoRepository.findByCompleted(completed).stream()
+                        .map(this::entityToDto)
+                        .toList();
+        }
+
         public List<TodoResponseDto> searchByTitle(String keyword) {
 
                 return todoRepository.findByTitleContaining(keyword).stream()
@@ -87,17 +96,21 @@ public class TodoService {
                         .toList();
         }
 
-        public List<TodoResponseDto> getCompletedTodos(Boolean completed) {
+        public List<TodoResponseDto> getTodos(String keyword, Boolean completed) {
 
-                return todoRepository.findByCompleted(completed).stream()
-                        .map(this::entityToDto)
-                        .toList();
-        }
-
-        public List<TodoResponseDto> getByCreatedById(Long createdBy) {
-
-                return todoRepository.findByCreatedById(createdBy).stream()
-                        .map(this::entityToDto)
-                        .toList();
+                if (keyword != null && !keyword.isEmpty() && completed != null) {
+                        List<Todo> todoList = todoRepository.findByTitleContainingAndCompleted(keyword, completed);
+                        return todoList.stream().map(this::entityToDto).toList();
+                }
+                else if (keyword != null && !keyword.isEmpty()) {
+                        return searchByTitle(keyword);
+                }
+                else if (completed != null) {
+                        return getCompletedTodos(completed);
+                }
+                else {
+                        return getAll();
+                }
         }
 }
+//검색 기능 고도화 중 위 함수 이용해서, html 수정하면 될 듯

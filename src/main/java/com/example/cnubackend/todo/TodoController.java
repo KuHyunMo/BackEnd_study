@@ -37,11 +37,20 @@ public class TodoController {
         return ResponseEntity.ok(todos);
     }
 
+
     @GetMapping("/search")
-    public ResponseEntity<List<TodoResponseDto>> search(@RequestParam String keyword) {
-        List<TodoResponseDto> results = todoService.searchByTitle(keyword);
-        return ResponseEntity.ok(results);
+    public ResponseEntity<List<TodoResponseDto>> getTodos(@RequestParam(required = false) String keyword,@RequestParam(required = false) Boolean completed) {
+    // TodoService에 새로 만든 통합 조회 메서드 호출
+    // keyword와 completed가 null인지 아닌지에 따라 Service에서 4가지 상황을 처리함
+        List<TodoResponseDto> todos = todoService.getTodos(keyword, completed); 
+        return ResponseEntity.ok(todos);
     }
+
+    // @GetMapping("/search")
+    // public ResponseEntity<List<TodoResponseDto>> search(@RequestParam String keyword) {
+    //     List<TodoResponseDto> results = todoService.searchByTitle(keyword);
+    //     return ResponseEntity.ok(results);
+    // }
 
     @GetMapping("/completed")
     public ResponseEntity<List<TodoResponseDto>> getCompletedTodos(@RequestParam Boolean completed) {

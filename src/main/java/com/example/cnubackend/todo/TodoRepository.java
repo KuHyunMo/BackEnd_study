@@ -8,4 +8,6 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
     List<Todo> findByTitleContaining(String keyword);
     List<Todo> findByCompleted(Boolean completed);
     List<Todo> findByCreatedById(Long createdBy);
+
+    List<Todo> findByTitleContainingAndCompleted(String keyword, Boolean completed);
 }

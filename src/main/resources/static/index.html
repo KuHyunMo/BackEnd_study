@@ -46,6 +46,21 @@
             display: flex;
             gap: 8px;
         }
+
+        /* 수정 모드 스타일 */
+        .edit-mode-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+        }
+        .edit-input-text {
+            flex-grow: 1;
+            padding: 5px;
+        }
+
+
+
         .btn {
             border: none;
             border-radius: 5px;
@@ -54,7 +69,7 @@
             cursor: pointer;
             background: #1976d2;
             color: #fff;
-            transition: background 0.2s;
+            transition: background 0.1s;
         }
         .btn:hover { background: #125ea7; }
         .btn-danger { background: #e53935; }
@@ -148,7 +163,10 @@
             todoList.innerHTML = '<li style="color:#888;text-align:center;">할 일이 없습니다.</li>';
             return;
         }
-        todos.forEach(todo => {
+        todos.forEach((todo, index) => {
+
+            const displayIndex = index + 1;
+
             const li = document.createElement('li');
             li.className = 'todo-card';
             li.innerHTML = `
@@ -156,8 +174,10 @@
                     <span>${todo.title}</span>
                 </div>
                 <div style="font-size:0.97em;color:#666;">상태: <b style="color:${todo.completed ? '#1976d2' : '#e53935'}">${todo.completed ? '완료' : '미완료'}</b></div>
-                <div style="font-size:0.93em;color:#aaa;">ID: ${todo.id ?? '-'} | 작성자: ${todo.nickname ?? '-'}</div>
+                <div style="font-size:0.93em;color:#aaa;">ID: ${displayIndex ?? '-'} | 작성자: ${todo.nickname ?? '-'}</div>
+                
                 <div class="todo-actions">
+                    <button class="btn" onclick="updateById(${todo.id})">수정</button>
                     <button class="btn btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
                 </div>
             `;
@@ -214,6 +234,32 @@
         }
     }
 
+    //수정 함수
+    async function updateById(id) {
+        const newTitle = prompt('새 제목을 입력하세요.');
+        if (!newTitle) return; // 취소 시 종료
+        const newCompleted = confirm('완료 상태로 설정하시겠습니까?\n(확인: 완료 / 취소: 미완료)');
+
+        showMessage('수정 중...');
+        try {
+            const res = await fetch(`${TODOS_PATH}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...tokenHeader() },
+                body: JSON.stringify({ title : newTitle, completed : newCompleted })
+            });
+            if (res.ok) {
+                showMessage('수정 성공!');
+                fetchTodos();
+            } else {
+                const data = await res.json();
+                showMessage('에러: ' + (data.message || JSON.stringify(data)), true);
+            }
+        } catch (e) {
+            showMessage('에러: ' + e, true);
+        }
+    }
+
+
     async function deleteTodo(id) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
         showMessage('삭제 중...');
@@ -234,36 +280,35 @@
         }
     }
 
+
+
+    
     async function searchTodos() {
         const keyword = document.getElementById('search-keyword').value.trim();
-        if (!keyword) return fetchTodos();
-        showMessage('검색 중...');
-        try {
-            const res = await fetch(`${TODOS_PATH}/search?keyword=` + encodeURIComponent(keyword), {
-                headers: { 'Accept': 'application/json', ...tokenHeader() }
-            });
-            const data = await res.json();
-            renderTodos(data);
-            showMessage('검색 완료');
-        } catch (e) {
-            showMessage('에러: ' + e, true);
-        }
-    }
+        const completedValue = document.getElementById('filter-completed').value;
 
-    async function filterCompleted() {
-        const val = document.getElementById('filter-completed').value;
-        if (val === '') return fetchTodos();
-        showMessage('필터링 중...');
+        const params = new URLSearchParams();
+        if (keyword) params.append('keyword', keyword);
+        if (completed !== "") params.append('completed', completedValue);
+        showMessage('조회 중...');
         try {
-            const res = await fetch(`${TODOS_PATH}/completed?completed=${val}`, {
+            const res = await fetch(`${TODOS_PATH}/search?${params.toString()}`, {
+                method: 'GET',
                 headers: { 'Accept': 'application/json', ...tokenHeader() }
             });
-            const data = await res.json();
-            renderTodos(data);
-            showMessage('필터링 완료');
+
+            if (res.ok) {
+                const data = await res.json();
+                renderTodos(data); // 백엔드가 상황 처리해서 보내준 데이터를 그림
+                showMessage(keyword ? `'${keyword}' 검색 결과` : '목록 불러오기 성공');
+            }
+            else {
+                showMessage('조회 실패', true);
+            }
         } catch (e) {
-            showMessage('에러: ' + e, true);
+            console.error("조회 실패:", e);
         }
+        
     }
 
     document.getElementById('btn-logout').addEventListener('click', () => {
@@ -275,7 +320,7 @@
     document.getElementById('btn-create').addEventListener('click', createTodo);
     document.getElementById('btn-refresh').addEventListener('click', fetchTodos);
     document.getElementById('btn-search').addEventListener('click', searchTodos);
-    document.getElementById('filter-completed').addEventListener('change', filterCompleted);
+    document.getElementById('filter-completed').addEventListener('change', fetchTodos);
     fetchTodos();
 </script>
 </body>
