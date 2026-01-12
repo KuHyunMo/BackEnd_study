@@ -37,12 +37,19 @@ public class TodoController {
         return ResponseEntity.ok(todos);
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<TodoResponseDto>> getMyTodos(@AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.valueOf(user.getUsername());
+        List<TodoResponseDto> myTodos = todoService.getByCreatedById(userId);
+        return ResponseEntity.ok(myTodos);
+    }
 
     @GetMapping("/search")
-    public ResponseEntity<List<TodoResponseDto>> getTodos(@RequestParam(required = false) String keyword,@RequestParam(required = false) Boolean completed) {
+    public ResponseEntity<List<TodoResponseDto>> getTodos(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String keyword,@RequestParam(required = false) Boolean completed) {
     // TodoService에 새로 만든 통합 조회 메서드 호출
     // keyword와 completed가 null인지 아닌지에 따라 Service에서 4가지 상황을 처리함
-        List<TodoResponseDto> todos = todoService.getTodos(keyword, completed); 
+        Long userId = Long.valueOf(user.getUsername());
+        List<TodoResponseDto> todos = todoService.getTodos(userId, keyword, completed); 
         return ResponseEntity.ok(todos);
     }
 
@@ -58,12 +65,7 @@ public class TodoController {
         return ResponseEntity.ok(completedTodos);
     }
 
-    @GetMapping("/my")
-    public ResponseEntity<List<TodoResponseDto>> getMyTodos(@AuthenticationPrincipal UserDetails user) {
-        Long userId = Long.valueOf(user.getUsername());
-        List<TodoResponseDto> myTodos = todoService.getByCreatedById(userId);
-        return ResponseEntity.ok(myTodos);
-    }
+    
 
     
     @GetMapping("/{id}")

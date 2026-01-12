@@ -76,7 +76,7 @@ public class TodoService {
 
                 return entityToDto(updatedTodo);
         }
-
+//관리자용 통합 검색 기능
         public List<TodoResponseDto> getByCreatedById(Long createdBy) {
                 return todoRepository.findByCreatedById(createdBy).stream()
                         .map(this::entityToDto)
@@ -95,22 +95,23 @@ public class TodoService {
                         .map(this::entityToDto)
                         .toList();
         }
+//사용자용 id별 검색
+        public List<TodoResponseDto> getTodos(Long userId, String keyword, Boolean completed) {
 
-        public List<TodoResponseDto> getTodos(String keyword, Boolean completed) {
-
+                List<Todo> todoList;
                 if (keyword != null && !keyword.isEmpty() && completed != null) {
-                        List<Todo> todoList = todoRepository.findByTitleContainingAndCompleted(keyword, completed);
-                        return todoList.stream().map(this::entityToDto).toList();
+                        todoList = todoRepository.findByCreatedByIdAndTitleContainingAndCompleted(userId, keyword, completed);
                 }
                 else if (keyword != null && !keyword.isEmpty()) {
-                        return searchByTitle(keyword);
+                        todoList = todoRepository.findByCreatedByIdAndTitleContaining(userId, keyword);
                 }
                 else if (completed != null) {
-                        return getCompletedTodos(completed);
+                        todoList = todoRepository.findByCreatedByIdAndCompleted(userId, completed);
                 }
                 else {
-                        return getAll();
+                        todoList = todoRepository.findByCreatedById(userId);
                 }
+                return todoList.stream().map(this::entityToDto).toList();
         }
 }
 //검색 기능 고도화 중 위 함수 이용해서, html 수정하면 될 듯

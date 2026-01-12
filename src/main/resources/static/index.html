@@ -188,7 +188,8 @@
     async function fetchTodos() {
         showMessage('로딩...');
         try {
-            const res = await fetch(TODOS_PATH, { headers: { 'Accept': 'application/json', ...tokenHeader() } });
+            const res = await fetch(`${TODOS_PATH}/my?`, { headers: { 'Accept': 'application/json', ...tokenHeader() } });
+
 
             const text = await res.text(); 
         if (!text) {
